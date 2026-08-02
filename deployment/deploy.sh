@@ -37,10 +37,22 @@ echo "[deploy] PM2..."
 pm2 startOrReload deployment/ecosystem.config.js --env production --update-env
 pm2 save
 
-echo "[health] GET http://127.0.0.1:3050/"
-curl -sf -o /dev/null -w "[health] HTTP %{http_code}\n" http://127.0.0.1:3050/ || {
-  echo "[health] FAILED" >&2
-  exit 1
-}
+echo "[health] waiting for Next on :3050..."
+ok=0
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  sleep 2
+  if curl -sf -o /dev/null -w "" http://127.0.0.1:3050/; then
+    echo "[health] HTTP 200 (attempt $i)"
+    ok=1
+    break
+  fi
+  echo "[health] not ready yet (attempt $i)..."
+done
 
-echo "[deploy] success — proxy your site to 127.0.0.1:3050"
+if [[ "$ok" -ne 1 ]]; then
+  echo "[health] FAILED — last logs:" >&2
+  pm2 logs ec-web --lines 40 --nostream >&2 || true
+  exit 1
+fi
+
+echo "[deploy] success — aaPanel: reverse proxy → http://127.0.0.1:3050 (not PHP)"
