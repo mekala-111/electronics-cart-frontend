@@ -55,11 +55,19 @@ export const checkoutAddressSchema = z.object({
 
 export type CheckoutAddressFormValues = z.infer<typeof checkoutAddressSchema>;
 
+/** Seed / legacy IDs are UUID-shaped but not always RFC version 1–5. */
+const uuidShaped = z
+  .string()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    "Fulfillment warehouse required",
+  );
+
 /** Full checkout wizard — address + delivery + payment selections */
 export const checkoutFormSchema = checkoutAddressSchema.extend({
   shippingMethodId: z.string().min(1, "Select a delivery option"),
   paymentMethodId: z.string().min(1, "Select a payment method"),
-  warehouseId: z.string().uuid("Fulfillment warehouse required"),
+  warehouseId: uuidShaped,
   couponCode: z.string().optional(),
 });
 

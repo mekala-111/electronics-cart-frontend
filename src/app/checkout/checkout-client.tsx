@@ -297,7 +297,22 @@ function CheckoutFlow() {
         "warehouseId",
       ]);
       if (!ok) {
-        toast.error("Address incomplete", "Fix the highlighted fields");
+        const v = form.getValues();
+        const checked = checkoutFormSchema
+          .pick({
+            fullName: true,
+            phone: true,
+            line1: true,
+            city: true,
+            state: true,
+            postalCode: true,
+            warehouseId: true,
+          })
+          .safeParse(v);
+        const detail = checked.success
+          ? "Fix the highlighted fields"
+          : checked.error.issues[0]?.message || "Fix the highlighted fields";
+        toast.error("Address incomplete", detail);
         return;
       }
       if (!warehouseId) {
@@ -525,6 +540,7 @@ function CheckoutFlow() {
                           No warehouses available — checkout cannot continue.
                         </p>
                       ) : null}
+                      <FieldError message={errors.warehouseId?.message} />
                     </div>
                   ) : null}
 
