@@ -55,7 +55,8 @@ function mapFirebaseError(error: unknown): ApiError {
       "Firebase Phone Auth needs Blaze billing (or add a test phone number in Console).",
     "auth/network-request-failed": "Network error talking to Google. Check connection and retry.",
     "auth/internal-error": "Google sign-in failed internally. Refresh and try again.",
-    "auth/argument-error": "Firebase Auth is misconfigured (check NEXT_PUBLIC_FIREBASE_*).",
+    "auth/argument-error":
+      "Google sign-in could not start. Refresh and try again (or allow popups).",
   };
 
   let message = messages[code];

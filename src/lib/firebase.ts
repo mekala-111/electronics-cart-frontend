@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import {
   browserLocalPersistence,
+  browserPopupRedirectResolver,
   getAuth,
   initializeAuth,
   type Auth,
@@ -32,8 +33,9 @@ export function getFirebaseApp(): FirebaseApp {
 }
 
 /**
- * Prefer localStorage persistence. Default IndexedDB persistence throws
- * "Database is closing/hidden" when the Google popup triggers pagehide.
+ * localStorage persistence avoids IndexedDB "closing/hidden" on Google popup.
+ * Must pass popupRedirectResolver — without it signInWithPopup throws
+ * auth/argument-error.
  */
 export function getFirebaseAuth(): Auth {
   if (authSingleton) return authSingleton;
@@ -45,6 +47,7 @@ export function getFirebaseAuth(): Auth {
   try {
     authSingleton = initializeAuth(app, {
       persistence: browserLocalPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver,
     });
   } catch {
     authSingleton = getAuth(app);
