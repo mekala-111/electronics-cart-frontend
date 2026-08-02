@@ -174,15 +174,26 @@ export function useRegister() {
 }
 
 export function useGoogleSignIn() {
+  const qc = useQueryClient();
+  const setSession = useAuthStore((s) => s.setSession);
+
   return useMutation({
     mutationFn: async () => {
-      // Navigates away to Google; session is completed via useCompleteGoogleRedirect.
-      await firebaseGoogleSignIn();
+      const result = await firebaseGoogleSignIn();
+      if (result === "redirecting") return null;
+      return exchangeFirebaseForNest(result);
+    },
+    onSuccess: (data) => {
+      if (!data) return; // redirect in progress
+      applyAuthSuccess(data, setSession);
+      void qc.invalidateQueries({ queryKey: queryKeys.me });
+      void prefetchWishlist(qc);
+      void prefetchAddresses(qc);
     },
   });
 }
 
-/** Finish Google redirect on /auth/login and /auth/register. */
+/** Finish Google redirect on /auth/login and /auth/register (popup fallback path). */
 export function useCompleteGoogleRedirect(options?: { successPath?: string }) {
   const qc = useQueryClient();
   const setSession = useAuthStore((s) => s.setSession);

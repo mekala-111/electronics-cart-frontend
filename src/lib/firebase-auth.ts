@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
+  signInWithPopup,
   signInWithRedirect,
   signOut,
   updateProfile,
@@ -143,11 +144,26 @@ export async function firebaseRegister(
   }
 }
 
-export async function firebaseGoogleSignIn() {
+export async function firebaseGoogleSignIn(): Promise<AuthSessionResponse | "redirecting"> {
   try {
     const provider = new GoogleAuthProvider();
-    // Redirect avoids COOP / window.closed issues with popups on production HTTPS.
-    await signInWithRedirect(getFirebaseAuth(), provider);
+    const auth = getFirebaseAuth();
+    // Prefer popup on HTTPS — redirect often returns null on custom domains
+    // when authDomain is *.firebaseapp.com (3rd-party storage).
+    try {
+      const cred = await signInWithPopup(auth, provider);
+      return toSessionResponse(cred.user);
+    } catch (popupErr) {
+      const code =
+        popupErr && typeof popupErr === "object" && "code" in popupErr
+          ? String((popupErr as { code: string }).code)
+          : "";
+      if (code === "auth/popup-blocked" || code === "auth/cancelled-popup-request") {
+        await signInWithRedirect(auth, provider);
+        return "redirecting";
+      }
+      throw popupErr;
+    }
   } catch (error) {
     throw mapFirebaseError(error);
   }
@@ -156,7 +172,9 @@ export async function firebaseGoogleSignIn() {
 /** Call on auth pages after Google redirect returns. */
 export async function firebaseCompleteGoogleRedirect(): Promise<AuthSessionResponse | null> {
   try {
-    const cred = await getRedirectResult(getFirebaseAuth());
+    const auth = getFirebaseAuth();
+    await auth.authStateReady();
+    const cred = await getRedirectResult(auth);
     if (!cred?.user) return null;
     return toSessionResponse(cred.user);
   } catch (error) {
