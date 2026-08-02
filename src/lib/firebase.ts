@@ -1,5 +1,10 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import {
+  browserLocalPersistence,
+  getAuth,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,6 +16,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+let authSingleton: Auth | undefined;
+
 function assertConfig() {
   if (!firebaseConfig.apiKey || !firebaseConfig.appId) {
     throw new Error(
@@ -19,11 +26,28 @@ function assertConfig() {
   }
 }
 
-export function getFirebaseApp() {
+export function getFirebaseApp(): FirebaseApp {
   assertConfig();
   return getApps().length ? getApp() : initializeApp(firebaseConfig);
 }
 
-export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+/**
+ * Prefer localStorage persistence. Default IndexedDB persistence throws
+ * "Database is closing/hidden" when the Google popup triggers pagehide.
+ */
+export function getFirebaseAuth(): Auth {
+  if (authSingleton) return authSingleton;
+  const app = getFirebaseApp();
+  if (typeof window === "undefined") {
+    authSingleton = getAuth(app);
+    return authSingleton;
+  }
+  try {
+    authSingleton = initializeAuth(app, {
+      persistence: browserLocalPersistence,
+    });
+  } catch {
+    authSingleton = getAuth(app);
+  }
+  return authSingleton;
 }

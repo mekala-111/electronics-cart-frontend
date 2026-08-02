@@ -60,6 +60,10 @@ function mapFirebaseError(error: unknown): ApiError {
     message =
       "SMS to this country is blocked. Allow India (IN) under Authentication → Settings → SMS region policy.";
   }
+  if (!message && /closing\/hidden|IndexedDB/i.test(rawMessage)) {
+    message =
+      "Browser storage blocked sign-in. Refresh the page and try Google again.";
+  }
   if (!message) {
     message = rawMessage
       ? rawMessage.replace(/^Firebase:\s*/i, "").replace(/\s*\([^)]*\)\.?\s*$/, "")
