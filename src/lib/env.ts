@@ -11,7 +11,7 @@ function trimEnv(value: string | undefined): string | undefined {
 }
 
 const DEFAULT_API_URL = "https://api.gdcd.online/api";
-const DEFAULT_SITE_URL = "https://electronicscart.in";
+const DEFAULT_SITE_URL = "https://ecartlaptops.com";
 
 /**
  * Nest API base including `/api` suffix.

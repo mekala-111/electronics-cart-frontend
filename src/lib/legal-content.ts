@@ -21,7 +21,7 @@ export const LEGAL_META: Record<
       {
         heading: "1. Agreement",
         body: [
-          "By accessing electronicscart.in or placing an order with Electronics Cart (“we”, “us”), you agree to these Terms of Service. If you do not agree, do not use the site or place orders.",
+          "By accessing ecartlaptops.com or placing an order with Electronics Cart (“we”, “us”), you agree to these Terms of Service. If you do not agree, do not use the site or place orders.",
           "We sell new and certified refurbished electronics (primarily laptops and related accessories) to customers in India. Orders are subject to availability, verification, and payment confirmation.",
         ],
       },

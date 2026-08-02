@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 /** Dev-only credentials — this module must not be imported from production entry paths. */
 const DEMO_ADMIN = {
-  email: "admin@electronicscart.in",
+  email: "admin@ecartlaptops.com",
   password: "Admin@12345",
   name: "Admin",
   roles: ["admin", "super_admin"] as string[],
