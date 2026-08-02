@@ -30,7 +30,8 @@ else
   npm install
 fi
 
-echo "[deploy] build..."
+echo "[deploy] clean build..."
+rm -rf .next
 npm run build
 
 echo "[deploy] PM2..."
