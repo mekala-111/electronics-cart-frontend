@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/features/auth/auth-shell";
 import { loginSchema, type LoginFormValues } from "@/validators/auth.schema";
-import { postLoginPath, useGoogleSignIn, useLogin } from "@/hooks/use-auth";
+import { postLoginPath, useCompleteGoogleRedirect, useGoogleSignIn, useLogin } from "@/hooks/use-auth";
 import { useToast } from "@/components/shared/toast";
 import { ApiError } from "@/types/api";
 import { allowDemoAuth } from "@/lib/env";
@@ -31,6 +31,7 @@ export default function LoginPage() {
   const router = useRouter();
   const loginMutation = useLogin();
   const googleMutation = useGoogleSignIn();
+  useCompleteGoogleRedirect();
   const toast = useToast();
   const {
     register,
@@ -110,17 +111,13 @@ export default function LoginPage() {
 
       <CtaButton
         type="button"
-        label={googleMutation.isPending ? "Connecting…" : "Continue with Google"}
+        label={googleMutation.isPending ? "Redirecting…" : "Continue with Google"}
         variant="secondary"
         className="w-full"
         loading={googleMutation.isPending}
         onClick={async () => {
           try {
             await googleMutation.mutateAsync();
-            const roles = useAuthStore.getState().user?.roles;
-            const next = readNextPath();
-            toast.success("Welcome back", "You are signed in with Google.");
-            router.push(next ?? postLoginPath(roles));
           } catch (err) {
             const message =
               err instanceof ApiError ? err.message : "Google sign-in failed.";

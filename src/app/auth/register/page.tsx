@@ -7,7 +7,7 @@ import { CtaButton } from "@/components/shared/cta-button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/features/auth/auth-shell";
-import { useGoogleSignIn, useRegister } from "@/hooks/use-auth";
+import { useCompleteGoogleRedirect, useGoogleSignIn, useRegister } from "@/hooks/use-auth";
 import { ApiError } from "@/types/api";
 import { registerSchema, type RegisterFormValues } from "@/validators/auth.schema";
 import { useToast } from "@/components/shared/toast";
@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const registerMutation = useRegister();
   const googleMutation = useGoogleSignIn();
+  useCompleteGoogleRedirect({ successPath: "/profile" });
   const toast = useToast();
   const {
     register,
@@ -72,15 +73,13 @@ export default function RegisterPage() {
       </div>
       <CtaButton
         type="button"
-        label={googleMutation.isPending ? "Connecting…" : "Continue with Google"}
+        label={googleMutation.isPending ? "Redirecting…" : "Continue with Google"}
         variant="secondary"
         className="w-full"
         loading={googleMutation.isPending}
         onClick={async () => {
           try {
             await googleMutation.mutateAsync();
-            toast.success("Welcome", "You are signed in with Google.");
-            router.push("/profile");
           } catch (err) {
             const message =
               err instanceof ApiError ? err.message : "Google sign-in failed.";

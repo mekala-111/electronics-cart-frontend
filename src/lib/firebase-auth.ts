@@ -2,10 +2,11 @@ import {
   GoogleAuthProvider,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
   type ConfirmationResult,
@@ -145,7 +146,18 @@ export async function firebaseRegister(
 export async function firebaseGoogleSignIn() {
   try {
     const provider = new GoogleAuthProvider();
-    const cred = await signInWithPopup(getFirebaseAuth(), provider);
+    // Redirect avoids COOP / window.closed issues with popups on production HTTPS.
+    await signInWithRedirect(getFirebaseAuth(), provider);
+  } catch (error) {
+    throw mapFirebaseError(error);
+  }
+}
+
+/** Call on auth pages after Google redirect returns. */
+export async function firebaseCompleteGoogleRedirect(): Promise<AuthSessionResponse | null> {
+  try {
+    const cred = await getRedirectResult(getFirebaseAuth());
+    if (!cred?.user) return null;
     return toSessionResponse(cred.user);
   } catch (error) {
     throw mapFirebaseError(error);

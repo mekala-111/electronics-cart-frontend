@@ -9,6 +9,7 @@ import { ApiError } from "@/types/api";
 import { prefetchWishlist } from "@/hooks/use-wishlist";
 import { prefetchAddresses } from "@/hooks/use-addresses";
 import {
+  firebaseCompleteGoogleRedirect,
   firebaseGoogleSignIn,
   firebaseLogout,
   firebaseSendOtp,
@@ -24,6 +25,9 @@ import {
   type LoginPayload,
   type RegisterPayload,
 } from "@/types/auth";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/shared/toast";
 
 function useHasAccessToken() {
   return typeof window !== "undefined" && Boolean(tokenStorage.getAccess());
@@ -170,21 +174,51 @@ export function useRegister() {
 }
 
 export function useGoogleSignIn() {
-  const qc = useQueryClient();
-  const setSession = useAuthStore((s) => s.setSession);
-
   return useMutation({
     mutationFn: async () => {
-      const firebaseSession = await firebaseGoogleSignIn();
-      return exchangeFirebaseForNest(firebaseSession);
-    },
-    onSuccess: (data) => {
-      applyAuthSuccess(data, setSession);
-      void qc.invalidateQueries({ queryKey: queryKeys.me });
-      void prefetchWishlist(qc);
-      void prefetchAddresses(qc);
+      // Navigates away to Google; session is completed via useCompleteGoogleRedirect.
+      await firebaseGoogleSignIn();
     },
   });
+}
+
+/** Finish Google redirect on /auth/login and /auth/register. */
+export function useCompleteGoogleRedirect(options?: { successPath?: string }) {
+  const qc = useQueryClient();
+  const setSession = useAuthStore((s) => s.setSession);
+  const router = useRouter();
+  const toast = useToast();
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void (async () => {
+      try {
+        const firebaseSession = await firebaseCompleteGoogleRedirect();
+        if (!firebaseSession) return;
+        const data = await exchangeFirebaseForNest(firebaseSession);
+        applyAuthSuccess(data, setSession);
+        void qc.invalidateQueries({ queryKey: queryKeys.me });
+        void prefetchWishlist(qc);
+        void prefetchAddresses(qc);
+        toast.success("Welcome", "You are signed in with Google.");
+        const roles = useAuthStore.getState().user?.roles;
+        const next =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("next")
+            : null;
+        const safeNext = next && next.startsWith("/") ? next : null;
+        router.replace(
+          safeNext ?? options?.successPath ?? postLoginPath(roles),
+        );
+      } catch (err) {
+        const message =
+          err instanceof ApiError ? err.message : "Google sign-in failed.";
+        toast.error("Sign in failed", message);
+      }
+    })();
+  }, [qc, setSession, router, toast, options?.successPath]);
 }
 
 export function useForgotPassword() {
