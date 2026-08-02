@@ -38,7 +38,10 @@ function mapFirebaseError(error: unknown): ApiError {
     "auth/weak-password": "Password should be at least 6 characters.",
     "auth/too-many-requests": "Too many attempts. Try again later.",
     "auth/popup-closed-by-user": "Google sign-in was cancelled.",
-    "auth/unauthorized-domain": "This domain is not authorized for Firebase Auth.",
+    "auth/popup-blocked": "Popup was blocked. Allow popups for this site and try again.",
+    "auth/cancelled-popup-request": "Google sign-in was cancelled.",
+    "auth/unauthorized-domain":
+      "Add ecartlaptops.com under Firebase Console → Authentication → Settings → Authorized domains.",
     "auth/invalid-phone-number": "Enter a valid mobile number with country code.",
     "auth/missing-phone-number": "Enter a mobile number.",
     "auth/quota-exceeded": "SMS quota exceeded. Try again later.",
@@ -47,9 +50,12 @@ function mapFirebaseError(error: unknown): ApiError {
     "auth/code-expired": "OTP expired. Request a new code.",
     "auth/missing-verification-code": "Enter the OTP from your SMS.",
     "auth/operation-not-allowed":
-      "Phone sign-in is not enabled. Enable Phone in Firebase Console → Authentication.",
+      "This sign-in method is disabled in Firebase Console → Authentication.",
     "auth/billing-not-enabled":
       "Firebase Phone Auth needs Blaze billing (or add a test phone number in Console).",
+    "auth/network-request-failed": "Network error talking to Google. Check connection and retry.",
+    "auth/internal-error": "Google sign-in failed internally. Refresh and try again.",
+    "auth/argument-error": "Firebase Auth is misconfigured (check NEXT_PUBLIC_FIREBASE_*).",
   };
 
   let message = messages[code];
@@ -65,9 +71,18 @@ function mapFirebaseError(error: unknown): ApiError {
       "Browser storage blocked sign-in. Refresh the page and try Google again.";
   }
   if (!message) {
-    message = rawMessage
-      ? rawMessage.replace(/^Firebase:\s*/i, "").replace(/\s*\([^)]*\)\.?\s*$/, "")
-      : "Authentication failed. Please try again.";
+    // "Firebase: Error (auth/xyz)." → strip leaves bare "Error"; keep the code.
+    const stripped = rawMessage
+      .replace(/^Firebase:\s*/i, "")
+      .replace(/\s*\([^)]*\)\.?\s*$/, "")
+      .trim();
+    if (stripped && !/^Error\.?$/i.test(stripped)) {
+      message = stripped;
+    } else if (code && code !== "auth/unknown") {
+      message = `Sign-in failed (${code})`;
+    } else {
+      message = "Authentication failed. Please try again.";
+    }
   }
 
   return new ApiError({
