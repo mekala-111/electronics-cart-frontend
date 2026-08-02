@@ -1,0 +1,21 @@
+/** Flutter AppColors — source of truth */
+export const AppColors = {
+  blue: "#1E5EFF",
+  orange: "#F15A24",
+  darkNavy: "#08152F",
+  white: "#FFFFFF",
+  background: "#F6F8FC",
+  subtext: "#D8E4F5",
+  hot: "#E53935",
+  searchBg: "#F1F3F7",
+  navMuted: "#5A6A85",
+  glass: "rgba(16, 28, 58, 0.2)",
+  glassBorder: "rgba(255, 255, 255, 0.2)",
+  sectionBg: "#F7F9FC",
+  categoryBg: "#F8FAFC",
+  muted: "#6B7280",
+  cardBorder: "#E8EDF7",
+  divider: "#EEF3FA",
+  starGold: "#FFB020",
+  successGreen: "#2ECC71",
+} as const;

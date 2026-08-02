@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/* Flutter AppColors */
+:root {
+  --blue: #1e5eff;
+  --orange: #f15a24;
+  --dark-navy: #08152f;
+  --white: #ffffff;
+  --background: #f6f8fc;
+  --subtext: #d8e4f5;
+  --hot: #e53935;
+  --search-bg: #f1f3f7;
+  --nav-muted: #5a6a85;
+  --glass: rgba(16, 28, 58, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --section-bg: #f7f9fc;
+  --category-bg: #f8fafc;
+  --muted: #6b7280;
+  --card-border: #e8edf7;
+  --divider: #eef3fa;
+  --star-gold: #ffb020;
+  --success-green: #2ecc71;
+
+  /* Aliases used by existing routes */
+  --primary: var(--blue);
+  --accent: var(--orange);
+  --navy: var(--dark-navy);
+  --bg: var(--background);
+  --card: var(--white);
+  --border: var(--card-border);
+  --text: #111827;
+  --success: #10b981;
+  --danger: #ef4444;
+  --section: var(--section-bg);
+  --search: var(--search-bg);
+
+  --radius-card: 18px;
+  --radius-btn: 16px;
+  --radius-discount: 24px;
+  --radius-search: 28px;
+  --frame-max: 1440px;
+  --shadow-soft: 0 8px 16px rgba(8, 21, 47, 0.06);
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-navy: var(--navy);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-hot: var(--hot);
+  --color-section: var(--section);
+  --color-search: var(--search);
+  --color-subtext: var(--subtext);
+  --color-nav-muted: var(--nav-muted);
+  --color-category-bg: var(--category-bg);
+  --color-divider: var(--divider);
+  --color-star: var(--star-gold);
+  --font-sans: var(--font-inter);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--blue) 25%, white);
+}
+
+/* Flutter framePad responsive horizontal padding */
+.frame-pad {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+@media (min-width: 1024px) {
+  .frame-pad {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (min-width: 1440px) {
+  .frame-pad {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+@media (min-width: 1920px) {
+  .frame-pad {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+.section-pad {
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+@media (min-width: 1024px) {
+  .section-pad {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+}
+@media (min-width: 1440px) {
+  .section-pad {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+}
+@media (min-width: 1920px) {
+  .section-pad {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Prefer visible keyboard focus without changing mouse chrome */
+:focus-visible {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
