@@ -141,10 +141,10 @@ function CheckoutFlow() {
   const shippingMethodId = watch("shippingMethodId");
   const warehouseId = watch("warehouseId");
 
-  const selectedPayment = useMemo(
-    () => paymentMethods.data?.find((m) => m.id === paymentMethodId),
-    [paymentMethods.data, paymentMethodId],
-  );
+  const selectedPayment = useMemo(() => {
+    const methods = Array.isArray(paymentMethods.data) ? paymentMethods.data : [];
+    return methods.find((m) => m.id === paymentMethodId);
+  }, [paymentMethods.data, paymentMethodId]);
   const isCod = Boolean(
     selectedPayment?.code?.toLowerCase().includes("cod") ||
       selectedPayment?.name?.toLowerCase().includes("cash"),
@@ -164,7 +164,10 @@ function CheckoutFlow() {
     enabled: step >= 1 && Boolean(postalCode?.trim()),
   });
 
-  const quotes = useMemo(() => estimate.data ?? [], [estimate.data]);
+  const quotes = useMemo(
+    () => (Array.isArray(estimate.data) ? estimate.data : []),
+    [estimate.data],
+  );
   const selectedQuote: ShippingQuote | undefined =
     quotes.find((q) => q.rateId === selectedQuoteId) ?? quotes[0];
 
@@ -183,7 +186,7 @@ function CheckoutFlow() {
   }, [setStep]);
 
   useEffect(() => {
-    const list = warehouses.data ?? [];
+    const list = Array.isArray(warehouses.data) ? warehouses.data : [];
     if (!list.length || warehouseId) return;
     const preferred =
       list.find((w) => w.status === "active" || w.status === "ACTIVE") ?? list[0];
@@ -191,8 +194,9 @@ function CheckoutFlow() {
   }, [warehouses.data, warehouseId, setValue]);
 
   useEffect(() => {
-    if (!paymentMethods.data?.length || paymentMethodId) return;
-    const first = paymentMethods.data.find((m) => m.status === "active") ?? paymentMethods.data[0];
+    const methods = Array.isArray(paymentMethods.data) ? paymentMethods.data : [];
+    if (!methods.length || paymentMethodId) return;
+    const first = methods.find((m) => m.status === "active") ?? methods[0];
     if (first) {
       setValue("paymentMethodId", first.id);
       setPaymentMethodUi(first.id);
@@ -200,9 +204,10 @@ function CheckoutFlow() {
   }, [paymentMethods.data, paymentMethodId, setValue, setPaymentMethodUi]);
 
   useEffect(() => {
-    if (!shippingMethods.data?.length || shippingMethodId) return;
+    const methods = Array.isArray(shippingMethods.data) ? shippingMethods.data : [];
+    if (!methods.length || shippingMethodId) return;
     const first =
-      shippingMethods.data.find((m) => m.status === "active") ?? shippingMethods.data[0];
+      methods.find((m) => m.status === "active") ?? methods[0];
     if (first) {
       setValue("shippingMethodId", first.id);
       setSelectedMethodId(first.id);

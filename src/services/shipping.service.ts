@@ -8,14 +8,36 @@ import type {
   ShippingQuote,
 } from "@/types/shipping";
 
+type EstimateResponse =
+  | ShippingQuote[]
+  | { quotes: ShippingQuote[]; fromZone?: string; toZone?: string };
+
+function unwrapQuotes(raw: EstimateResponse): ShippingQuote[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && Array.isArray(raw.quotes)) return raw.quotes;
+  return [];
+}
+
 export const shippingService = {
   methods: () => apiGet<ShippingMethod[]>(endpoints.shipping.methods),
 
-  estimate: (body: ShippingEstimateInput) =>
-    apiMutate<ShippingQuote[]>("post", endpoints.shipping.estimate, body),
+  estimate: async (body: ShippingEstimateInput) => {
+    const raw = await apiMutate<EstimateResponse>(
+      "post",
+      endpoints.shipping.estimate,
+      body,
+    );
+    return unwrapQuotes(raw);
+  },
 
-  rates: (params?: { fromPincode?: string; toPincode?: string; weightKg?: number }) =>
-    apiGet<ShippingQuote[]>(endpoints.shipping.rates, params),
+  rates: async (params?: {
+    fromPincode?: string;
+    toPincode?: string;
+    weightKg?: number;
+  }) => {
+    const raw = await apiGet<EstimateResponse>(endpoints.shipping.rates, params);
+    return unwrapQuotes(raw);
+  },
 
   deliverySlots: () => apiGet<DeliverySlot[]>(endpoints.shipping.deliverySlots),
 
