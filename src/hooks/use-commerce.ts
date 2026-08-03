@@ -333,6 +333,7 @@ export function useSaveAdminProduct() {
       id?: string;
       product: Record<string, unknown>;
       variant?: Record<string, unknown>;
+      images?: File[];
     }) => {
       let productId = input.id;
       if (productId) {
@@ -344,7 +345,17 @@ export function useSaveAdminProduct() {
           await adminService.createVariant({ ...input.variant, productId });
         }
       }
-      return productId;
+      if (input.images?.length) {
+        for (let i = 0; i < input.images.length; i++) {
+          const uploaded = await adminService.uploadMedia(input.images[i]);
+          await adminService.attachProductMedia(productId!, {
+            mediaFileId: uploaded.id,
+            isPrimary: i === 0 && !input.id,
+            sortOrder: i,
+          });
+        }
+      }
+      return productId!;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["admin", "products"] });

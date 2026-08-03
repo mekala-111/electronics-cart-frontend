@@ -145,6 +145,8 @@ export const endpoints = {
     catalogProducts: "/admin/catalog/products",
     catalogProduct: (id: string) => `/admin/catalog/products/${id}`,
     catalogVariants: "/admin/catalog/variants",
+    catalogProductMedia: (id: string) => `/admin/catalog/products/${id}/media`,
+    mediaUpload: "/admin/media/upload",
     inventory: "/admin/inventory",
     lowStock: "/admin/inventory/low-stock-alerts",
     payments: "/admin/payments",

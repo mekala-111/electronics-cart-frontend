@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AdminShell } from "@/features/admin/admin-shell";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ function slugify(s: string) {
     .replace(/^-|-$/g, "")
     .slice(0, 280);
 }
+
+type ExistingImage = { id: string; url: string; isPrimary?: boolean };
 
 export default function AdminProductFormPage() {
   const params = useParams<{ id?: string }>();
@@ -35,8 +37,21 @@ export default function AdminProductFormPage() {
   const [price, setPrice] = useState("");
   const [mrp, setMrp] = useState("");
   const [specs, setSpecs] = useState("");
+  const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
+
+  const previews = useMemo(
+    () => imageFiles.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),
+    [imageFiles],
+  );
+
+  useEffect(() => {
+    return () => {
+      previews.forEach((p) => URL.revokeObjectURL(p.url));
+    };
+  }, [previews]);
 
   useEffect(() => {
     if (!id) return;
@@ -60,6 +75,15 @@ export default function AdminProductFormPage() {
           setMrp(String(v.mrp ?? ""));
           setSpecs([v.ram, v.storage, v.processor].filter(Boolean).join(" · "));
         }
+        setExistingImages(
+          (p.media ?? [])
+            .map((m) => ({
+              id: m.id,
+              url: m.url || "",
+              isPrimary: m.isPrimary,
+            }))
+            .filter((m) => m.url),
+        );
       })
       .catch((e: Error) => setError(e.message || "Failed to load product"))
       .finally(() => {
@@ -116,6 +140,7 @@ export default function AdminProductFormPage() {
                 stockStatus: "in_stock",
               }
             : undefined,
+        images: imageFiles,
       });
       router.push(`/admin/products/${productId}`);
     } catch (err) {
@@ -213,6 +238,59 @@ export default function AdminProductFormPage() {
               />
             </div>
           )}
+
+          <div className="space-y-3 rounded-[16px] border border-dashed border-border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-semibold text-navy">Product images</p>
+                <p className="text-xs text-muted">JPG/PNG/WebP up to 8MB. First image is primary.</p>
+              </div>
+              <label className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
+                Add images
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (!files.length) return;
+                    setImageFiles((prev) => [...prev, ...files].slice(0, 8));
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {(existingImages.length > 0 || previews.length > 0) && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {existingImages.map((img) => (
+                  <div key={img.id} className="relative overflow-hidden rounded-[14px] border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt="" className="h-28 w-full object-cover" />
+                    {img.isPrimary && (
+                      <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {previews.map((p, i) => (
+                  <div key={`${p.name}-${i}`} className="relative overflow-hidden rounded-[14px] border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={p.name} className="h-28 w-full object-cover" />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-navy"
+                      onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <textarea
             className="min-h-28 rounded-[16px] border border-border px-4 py-3 text-sm outline-none focus:border-primary"
             placeholder="Description"

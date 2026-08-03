@@ -122,6 +122,33 @@ export const adminService = {
     apiMutate("post", endpoints.admin.catalogVariants, body, {
       idempotencyKey: crypto.randomUUID(),
     }),
+  uploadMedia: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    const { apiClient } = await import("@/api/client");
+    const { data } = await apiClient.post<{
+      success: boolean;
+      data: { id: string; url: string };
+      message?: string;
+      code?: string;
+    }>(endpoints.admin.mediaUpload, form, {
+      headers: {
+        "Idempotency-Key": crypto.randomUUID(),
+      },
+      timeout: 60_000,
+    });
+    if (!data.success || !data.data?.id) {
+      throw new Error(data.message || "Upload failed");
+    }
+    return data.data;
+  },
+  attachProductMedia: (
+    productId: string,
+    body: { mediaFileId: string; isPrimary?: boolean; altText?: string; sortOrder?: number },
+  ) =>
+    apiMutate("post", endpoints.admin.catalogProductMedia(productId), body, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
   dashboard: () => apiGet<unknown>(endpoints.analytics.dashboard),
   funnels: () => apiGet<unknown>(endpoints.analytics.funnels),
   trends: (params?: { domain?: string; period?: string; days?: number }) =>
