@@ -31,6 +31,17 @@ export const catalogService = {
     apiGet<Array<{ id: string; code: string; name: string }>>(endpoints.catalog.productTypes),
   categories: () => apiGet<ApiCategory[]>(endpoints.catalog.categories),
   categoryTree: () => apiGet<ApiCategoryTreeNode[]>(endpoints.catalog.categoryTree),
+  collections: () =>
+    apiGet<
+      Array<{
+        id: string;
+        name: string;
+        slug: string;
+        productCount?: number;
+        isAutomatic?: boolean;
+        description?: string | null;
+      }>
+    >(endpoints.catalog.collections),
   products: (params?: ProductSearchParams) =>
     apiGetPaginated<ApiProductListItem>(endpoints.catalog.products, searchParams(params)),
   search: (params?: ProductSearchParams) =>

@@ -26,26 +26,94 @@ function formatCompactInr(n: number) {
 export function useAdminDashboard() {
   return useQuery({
     queryKey: queryKeys.adminDashboard,
-    queryFn: async () =>
-      withApiFallback(
-        async () => {
-          const raw = await adminService.dashboard();
-          const kpis = extractDashboardKpis(raw);
-          const series = extractSalesSeries(raw);
-          if (!kpis.length) {
-            return { kpis: mockAdminKpis.map((k) => ({ ...k })), series, sourceHint: "api-empty" };
-          }
-          return { kpis, series, sourceHint: "api" };
+    queryFn: async () => {
+      const [raw, marketing, products, customers, inventory, lowStock, warehouses] =
+        await Promise.all([
+          adminService.dashboard().catch(() => null),
+          adminService.marketingDashboard().catch(() => null),
+          adminService.products({ page: 1, limit: 1 }).catch(() => ({ items: [], meta: undefined })),
+          adminService.customers({ page: 1, limit: 1 }).catch(() => ({ items: [], meta: undefined })),
+          adminService.inventoryRows({ page: 1, limit: 100 }).catch(() => ({ items: [] as unknown[] })),
+          adminService.lowStock().catch(() => []),
+          adminService.warehouses().catch(() => []),
+        ]);
+
+      const widgets = extractWidgets(raw);
+      const kpis = extractDashboardKpis(raw);
+      const series = extractSalesSeriesRaw(raw);
+      const orderStatus = extractNamedCounts(raw, "orders");
+      const inventoryBreakdown = extractNamedCounts(raw, "inventory");
+      const units = (inventory.items as Array<{ available?: number }>).reduce(
+        (s, r) => s + Number(r.available ?? 0),
+        0,
+      );
+      const mkt = (marketing ?? {}) as Record<string, number>;
+
+      return {
+        kpis,
+        series,
+        widgets,
+        orderStatus,
+        inventoryBreakdown,
+        totals: {
+          products: products.meta?.total ?? products.items.length,
+          customers: customers.meta?.total ?? customers.items.length,
+          lowStock: Array.isArray(lowStock) ? lowStock.length : 0,
+          units,
+          warehouses: warehouses.length,
+          activeCoupons: Number(mkt.activeCoupons ?? 0),
+          campaigns: Number(mkt.runningEmailCampaigns ?? 0),
+          featureFlags: Number(mkt.featureFlags ?? 0),
         },
-        {
-          kpis: mockAdminKpis.map((k) => ({ ...k })),
-          series: [40, 55, 48, 70, 62, 80, 74, 90, 85, 95, 88, 100],
-          sourceHint: "fallback",
-        },
-      ),
-    staleTime: 60_000,
+        lowStockRows: Array.isArray(lowStock) ? lowStock : [],
+        inventoryRows: inventory.items as Array<{
+          sku?: string;
+          available?: number;
+          warehouseCode?: string;
+          reorderLevel?: number;
+        }>,
+      };
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     retry: 1,
   });
+}
+
+function extractWidgets(raw: unknown) {
+  if (!raw || typeof raw !== "object") return [];
+  const widgets = (raw as { widgets?: unknown }).widgets;
+  return Array.isArray(widgets) ? widgets : [];
+}
+
+function extractSalesSeriesRaw(raw: unknown): Array<{ label: string; revenue: number; orders: number }> {
+  const widgets = extractWidgets(raw) as Array<{ code?: string; data?: { series?: unknown[] } }>;
+  const sales = widgets.find((w) => w.code === "sales_summary" || Array.isArray(w.data?.series));
+  const series = sales?.data?.series;
+  if (!Array.isArray(series)) return [];
+  return series.map((row, i) => {
+    const r = (row ?? {}) as Record<string, unknown>;
+    return {
+      label: String(r.date ?? r.day ?? r.label ?? `D${i + 1}`),
+      revenue: Number(r.revenue ?? r.value ?? 0),
+      orders: Number(r.orders_count ?? r.orders ?? 0),
+    };
+  });
+}
+
+function extractNamedCounts(raw: unknown, kind: "orders" | "inventory") {
+  // Derive simple buckets from widget data when present; otherwise empty.
+  const widgets = extractWidgets(raw) as Array<{ code?: string; data?: Record<string, unknown> }>;
+  if (kind === "inventory") {
+    const inv = widgets.find((w) => w.code === "inventory_summary");
+    if (!inv?.data) return [];
+    return [
+      { name: "On hand", value: Number(inv.data.onHand ?? 0) },
+      { name: "Low stock", value: Number(inv.data.lowStock ?? 0) },
+      { name: "Stockout", value: Number(inv.data.stockout ?? 0) },
+    ].filter((x) => x.value > 0);
+  }
+  return [];
 }
 
 function extractDashboardKpis(
@@ -99,21 +167,7 @@ function extractDashboardKpis(
 }
 
 function extractSalesSeries(raw: unknown): number[] {
-  if (!raw || typeof raw !== "object") return [];
-  const widgets = Array.isArray((raw as { widgets?: unknown }).widgets)
-    ? ((raw as { widgets: Array<{ data?: { series?: unknown; revenue?: number } }> }).widgets)
-    : [];
-  const sales = widgets.find((w) => Array.isArray(w.data?.series));
-  const series = sales?.data?.series;
-  if (!Array.isArray(series) || !series.length) return [];
-  const values = series.map((row) => {
-    if (row && typeof row === "object" && "revenue" in row) {
-      return Number((row as { revenue: unknown }).revenue) || 0;
-    }
-    return Number(row) || 0;
-  });
-  const max = Math.max(...values, 1);
-  return values.map((v) => Math.round((v / max) * 100));
+  return extractSalesSeriesRaw(raw).map((r) => r.revenue);
 }
 
 export function useAdminOrders(status?: string) {
