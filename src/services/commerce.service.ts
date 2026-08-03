@@ -94,10 +94,49 @@ export const healthService = {
 export const adminService = {
   orders: (params?: { page?: number; limit?: number; status?: string }) =>
     apiGetPaginatedSafe(endpoints.admin.orders, params),
-  products: (params?: { page?: number; limit?: number }) =>
-    apiGetPaginatedSafe(endpoints.admin.catalogProducts, params),
+  order: (id: string) => apiGet<unknown>(endpoints.admin.order(id)),
+  cancelOrder: (id: string, body?: { note?: string }) =>
+    apiMutate("post", endpoints.admin.orderCancel(id), body ?? {}, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
+  createInvoice: (orderId: string) =>
+    apiMutate("post", endpoints.admin.orderInvoice(orderId), {}, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
+  invoices: (params?: { page?: number; limit?: number }) =>
+    apiGetPaginatedSafe(endpoints.admin.invoices, params),
+  customers: (params?: { page?: number; limit?: number }) =>
+    apiGetPaginatedSafe(endpoints.admin.customers, params),
+  products: (params?: { page?: number; limit?: number; q?: string; brandId?: string }) =>
+    apiGetPaginatedSafe(endpoints.catalog.products, params),
+  product: (id: string) => apiGet<unknown>(endpoints.catalog.product(id)),
+  createProduct: (body: unknown) =>
+    apiMutate("post", endpoints.admin.catalogProducts, body, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
+  updateProduct: (id: string, body: unknown) =>
+    apiMutate("patch", endpoints.admin.catalogProduct(id), body, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
+  createVariant: (body: unknown) =>
+    apiMutate("post", endpoints.admin.catalogVariants, body, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
   dashboard: () => apiGet<unknown>(endpoints.analytics.dashboard),
+  funnels: () => apiGet<unknown>(endpoints.analytics.funnels),
+  trends: (params?: { domain?: string; period?: string; days?: number }) =>
+    apiGet<unknown>(endpoints.analytics.trends, params),
+  reports: () => apiGet<unknown[]>(endpoints.analytics.reports),
   lowStock: () => apiGet<unknown[]>(endpoints.admin.lowStock),
+  inventoryRows: (params?: { page?: number; limit?: number }) =>
+    apiGetPaginatedSafe(endpoints.inventory.root, params),
+  warehouses: () => apiGet<Array<{ id: string; name?: string; code?: string }>>(endpoints.inventory.warehouses),
+  settings: () =>
+    apiGet<{ storeName: string; supportPhone: string; gstin: string }>(endpoints.admin.settings),
+  updateSettings: (body: { storeName?: string; supportPhone?: string; gstin?: string }) =>
+    apiMutate("patch", endpoints.admin.settings, body, {
+      idempotencyKey: crypto.randomUUID(),
+    }),
   marketingDashboard: () => apiGet<unknown>(endpoints.admin.marketingDashboard),
 };
 

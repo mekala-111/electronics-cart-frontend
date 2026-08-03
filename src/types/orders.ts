@@ -13,6 +13,8 @@ export type OrderSummary = {
   placedAt?: string | null;
   cancelledAt?: string | null;
   itemCount?: number;
+  customerId?: string;
+  customer?: string;
 };
 
 export type OrderLine = {

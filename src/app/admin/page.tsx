@@ -9,6 +9,8 @@ export default function AdminDashboardPage() {
   const dash = useAdminDashboard();
   const orders = useAdminOrders();
   const cards = dash.data?.data.kpis ?? [];
+  const series = dash.data?.data.series ?? [];
+  const bars = series.length ? series : [40, 55, 48, 70, 62, 80, 74, 90, 85, 95, 88, 100];
   const recent = (orders.data?.data ?? []).slice(0, 4);
 
   return (
@@ -16,7 +18,7 @@ export default function AdminDashboardPage() {
       <h1 className="text-3xl font-extrabold text-navy">
         Admin <span className="text-accent">Dashboard</span>
       </h1>
-      <p className="mt-2 text-muted">Premium overview matching storefront visual language.</p>
+      <p className="mt-2 text-muted">Live store metrics from analytics + recent orders.</p>
       <LiveDataBanner show={dash.data?.degraded || orders.data?.degraded} className="mt-4" />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -35,11 +37,11 @@ export default function AdminDashboardPage() {
         <div className="rounded-[24px] border border-border bg-white p-6 shadow-[var(--shadow-soft)]">
           <h2 className="font-bold text-navy">Sales trend</h2>
           <div className="mt-6 flex h-48 items-end gap-2">
-            {[40, 55, 48, 70, 62, 80, 74, 90, 85, 95, 88, 100].map((h, i) => (
+            {bars.map((h, i) => (
               <div
                 key={i}
                 className="flex-1 rounded-t-lg bg-gradient-to-t from-primary to-primary/60"
-                style={{ height: `${h}%` }}
+                style={{ height: `${Math.max(h, 4)}%` }}
               />
             ))}
           </div>
@@ -59,6 +61,7 @@ export default function AdminDashboardPage() {
                 </span>
               </li>
             ))}
+            {!recent.length && <li className="text-muted">No orders yet.</li>}
           </ul>
         </div>
       </div>

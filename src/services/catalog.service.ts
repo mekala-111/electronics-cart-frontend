@@ -27,6 +27,8 @@ function searchParams(params?: ProductSearchParams) {
 
 export const catalogService = {
   brands: () => apiGet<ApiBrand[]>(endpoints.catalog.brands),
+  productTypes: () =>
+    apiGet<Array<{ id: string; code: string; name: string }>>(endpoints.catalog.productTypes),
   categories: () => apiGet<ApiCategory[]>(endpoints.catalog.categories),
   categoryTree: () => apiGet<ApiCategoryTreeNode[]>(endpoints.catalog.categoryTree),
   products: (params?: ProductSearchParams) =>

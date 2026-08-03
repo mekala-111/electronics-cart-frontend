@@ -30,6 +30,7 @@ export const endpoints = {
   },
   catalog: {
     brands: "/catalog/brands",
+    productTypes: "/catalog/product-types",
     categories: "/catalog/categories",
     categoryTree: "/catalog/categories/tree",
     collections: "/catalog/collections",
@@ -137,12 +138,18 @@ export const endpoints = {
   admin: {
     orders: "/admin/orders",
     order: (id: string) => `/admin/orders/${id}`,
+    orderCancel: (id: string) => `/admin/orders/${id}/cancel`,
+    orderInvoice: (id: string) => `/admin/orders/${id}/invoices`,
+    invoices: "/admin/orders/invoices",
+    customers: "/admin/customers",
     catalogProducts: "/admin/catalog/products",
     catalogProduct: (id: string) => `/admin/catalog/products/${id}`,
+    catalogVariants: "/admin/catalog/variants",
     inventory: "/admin/inventory",
     lowStock: "/admin/inventory/low-stock-alerts",
     payments: "/admin/payments",
     analyticsDashboard: "/admin/analytics/dashboard/refresh",
     marketingDashboard: "/admin/marketing/dashboard",
+    settings: "/admin/settings",
   },
 } as const;

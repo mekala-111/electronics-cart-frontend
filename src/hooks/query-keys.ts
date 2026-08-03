@@ -41,4 +41,8 @@ export const queryKeys = {
   adminProducts: (params?: unknown) => ["admin", "products", params] as const,
   adminDashboard: ["admin", "dashboard"] as const,
   adminInventory: ["admin", "inventory"] as const,
+  adminCustomers: ["admin", "customers"] as const,
+  adminInvoices: ["admin", "invoices"] as const,
+  adminReports: ["admin", "reports"] as const,
+  adminSettings: ["admin", "settings"] as const,
 };
